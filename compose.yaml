@@ -1,0 +1,75 @@
+services:
+  api:
+    restart: "on-failure"
+    build:
+      context: ./api
+      target: dev
+      args:
+        PORT: ${API_PORT}
+    volumes:
+      - ./api:/app
+      - /app/.venv/
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${API_DATABASE}
+      PORT: ${API_PORT}
+      ALLOWED_CORS_ORIGINS: http://www.localhost:8880,http://api.localhost:8880,http://auth.localhost:8880,ui,localhost,www.localhost,http://www.localhost
+      ALLOWED_HOSTS: api.localhost,localhost,0.0.0.0
+    depends_on:
+      - db
+
+  ui:
+    restart: "on-failure"
+    env_file:
+      - ./ui/.env
+    build:
+      context: ./ui
+      target: dev
+    volumes:
+      - ./ui:/app
+      - /app/dist
+      - /app/node_modules
+    ports:
+      - "${WWW_PORT}:${WWW_PORT}"
+      - "24679:24679"
+    environment:
+      PORT: ${WWW_PORT}
+
+    depends_on:
+      - api
+
+  db:
+    image: postgres:latest
+    restart: "on-failure"
+    ports:
+      - "55432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./docker-volumes/postgresql:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # broker:
+  #   image: redis:latest
+  #   restart: "on-failure"
+  #   volumes:
+  #     - ./docker-volumes/redis:/data
+
+  proxy:
+    image: nginx:latest
+    restart: "on-failure"
+    environment:
+      RESOLVER: 127.0.0.11
+      WWW_SERVER: ${WWW_SERVER}
+      WWW_PORT: ${WWW_PORT}
+      API_SERVER: ${API_SERVER}
+      API_PORT: ${API_PORT}
+    ports:
+      - "4343:443"
+      - "8880:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/templates:/etc/nginx/templates
