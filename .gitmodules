@@ -1,0 +1,6 @@
+[submodule "api"]
+	path = api
+	url = git@github.com:romulocollopy/MineSweeperApi.git
+[submodule "ui"]
+	path = ui
+	url = git@github.com:romulocollopy/MineSweeperUi.git
