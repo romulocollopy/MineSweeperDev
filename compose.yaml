@@ -21,6 +21,8 @@ services:
 
   ui:
     restart: "on-failure"
+    env_file:
+      - ./ui/.env
     build:
       context: ./ui
       target: dev

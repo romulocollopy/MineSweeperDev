@@ -4,6 +4,7 @@ Run projects:
 
 ```console
 cp .env-example .env
+cp ./ui/.env-example ./ui/.env
 git submodule init git submodule update
 docker compose up -d
 docker compose exec api python manage.py migrate
